@@ -10,6 +10,7 @@ import {
 import PropTypes from 'prop-types';
 
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useSelector } from 'react-redux';
 import Button from '../../components/Button';
 
 const styles = StyleSheet.create({
@@ -49,10 +50,11 @@ const styles = StyleSheet.create({
   profileButtons: { width: 50, height: 50, resizeMode: 'contain' },
 });
 
-export default function Menu({ user, navigation }) {
+export default function Menu({ navigation }) {
+  const { profile } = useSelector(state => state.user);
+
   return (
     <>
-      <StatusBar hidden />
       <ImageBackground
         style={{ flex: 1 }}
         source={require('../../../assets/background.jpg')}
@@ -62,7 +64,7 @@ export default function Menu({ user, navigation }) {
             <Image
               style={styles.profileImage}
               source={{
-                uri: `https://api.adorable.io/avatars/285/${user.email}.png`,
+                uri: `https://api.adorable.io/avatars/285/meek.${profile.username}.png`,
               }}
             />
             <View style={{ flex: 1 }}>
@@ -94,7 +96,7 @@ export default function Menu({ user, navigation }) {
                   fontSize: 17,
                   fontWeight: '700',
                 }}
-              >{`Olá ${user.username}`}</Text>
+              >{`Olá ${profile.username}`}</Text>
             </View>
           </View>
         </View>

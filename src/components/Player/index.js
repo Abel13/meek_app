@@ -31,7 +31,7 @@ export default function Player({ user }) {
           <Image
             style={styles.image}
             source={{
-              uri: `https://api.adorable.io/avatars/285/${user.email}.png`,
+              uri: `https://api.adorable.io/avatars/250/meek.${user.username}.png`,
             }}
           />
           <View

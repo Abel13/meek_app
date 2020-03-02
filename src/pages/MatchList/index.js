@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import moment from 'moment';
 import {
   View,
   StatusBar,
@@ -9,20 +10,26 @@ import {
 } from 'react-native';
 
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useSelector, useDispatch } from 'react-redux';
+
+import * as MatchActions from '../../store/modules/match/actions';
+
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import Player from '../../components/Player';
+import api from '../../services/api';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#000',
   },
   title: {
     fontWeight: 'bold',
     fontSize: 30,
     color: '#FFF',
     margin: 10,
+    marginTop: 50,
     alignSelf: 'center',
   },
   item: {
@@ -49,47 +56,88 @@ const styles = StyleSheet.create({
 });
 
 export default function MatchList({ navigation }) {
-  const [matches, setMatches] = useState([
-    { id: 'a78wuaid7a8', name: 'Partida do Kim', participants: 3 },
-    { id: 'a78wuaiac98', name: 'Partida do Abel', participants: 1 },
-  ]);
+  const { profile } = useSelector(state => state.user);
+  const [matchName, setMatchName] = useState(
+    `Partida de ${profile.username} ${moment().format('YYMDhmmss')}`
+  );
 
-  function Item({ title, participants, email }) {
+  const dispatch = useDispatch();
+
+  const loading = useSelector(state => state.auth.loading);
+
+  const [matches, setMatches] = useState([]);
+
+  useEffect(() => {
+    async function loadMatches() {
+      try {
+        const response = await api.get('matches');
+        setMatches(response.data);
+      } catch (error) {
+        console.log(error.response);
+      }
+    }
+
+    loadMatches();
+  }, []);
+
+  function handleCreateMatch() {
+    dispatch(MatchActions.createMatchRequest(matchName));
+  }
+
+  function handleEnterInMatch(secureId) {
+    dispatch(MatchActions.enterMatchRequest(secureId));
+  }
+
+  function Item({ title, username, secureId }) {
     return (
-      <TouchableOpacity style={styles.item}>
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => handleEnterInMatch(secureId)}
+      >
         <View style={styles.item}>
           <Image
             style={styles.image}
             source={{
-              uri: `https://api.adorable.io/avatars/285/${email}.png`,
+              uri: `https://api.adorable.io/avatars/285/meek.${username}.png`,
             }}
           />
           <Text style={styles.itemTitle}>{title.toUpperCase()}</Text>
         </View>
-        <Text style={styles.itemParticipants}>{participants}</Text>
       </TouchableOpacity>
     );
   }
 
   return (
     <>
-      <StatusBar hidden />
       <View style={styles.container}>
         <View>
           <Text style={styles.title}>NOVA PARTIDA</Text>
-          <Input placeholder="Nome da partida" icon="play-arrow" />
+          <Input
+            value={matchName.toUpperCase()}
+            onChangeText={value => setMatchName(value)}
+            placeholder="Nome da partida"
+            icon="play-arrow"
+          />
           <View style={{ alignItems: 'flex-end', marginRight: 10 }}>
-            <Button onPress={() => navigation.navigate('Room')} text="CRIAR" />
+            <Button
+              loading={loading}
+              onPress={() => handleCreateMatch()}
+              text="CRIAR"
+            />
           </View>
         </View>
-        <View style={{ marginTop: 30 }}>
+        <View style={{ marginTop: 30, marginBottom: 10, flex: 1 }}>
           <Text style={styles.title}>PARTIDAS ABERTAS</Text>
           <FlatList
             data={matches}
             renderItem={({ item }) => (
-              <Item title={item.name} participants={item.participants} />
+              <Item
+                title={item.name}
+                username={item.username}
+                secureId={item.secure_id}
+              />
             )}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.secure_id}
           />
         </View>
       </View>

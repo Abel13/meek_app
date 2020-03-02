@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
 
 import { useSelector, useDispatch } from 'react-redux';
@@ -12,7 +12,7 @@ import Button from '../../components/Button';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#000',
     justifyContent: 'space-between',
   },
   titleContainer: {
@@ -31,27 +31,32 @@ const styles = StyleSheet.create({
 });
 
 export default function SignIn({ navigation }) {
-  const dispatch = useDispatch();
-  const players = useSelector(state => state.players);
-
   const passwordRef = useRef();
+
+  const dispatch = useDispatch();
+
+  const loading = useSelector(state => state.auth.loading);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   function createAccount() {
     navigation.navigate('SignUp');
   }
 
-  function handleSubmit({ email, password }) {
+  function handleSubmit() {
     dispatch(AuthActions.signInRequest(email, password));
   }
 
   return (
     <>
-      <StatusBar hidden />
       <View style={styles.container}>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>LOGIN</Text>
           <View style={{ width: '70%' }}>
             <Input
+              value={email}
+              onChangeText={value => setEmail(value)}
               autoCorrect={false}
               placeholder="E-Mail"
               icon="mail-outline"
@@ -60,6 +65,8 @@ export default function SignIn({ navigation }) {
               onSubmitEditing={() => passwordRef.current.focus()}
             />
             <Input
+              value={password}
+              onChangeText={value => setPassword(value)}
               secureTextEntry
               placeholder="Password"
               icon="lock-outline"
@@ -70,16 +77,11 @@ export default function SignIn({ navigation }) {
           </View>
 
           <Button
+            loading={loading}
             text="LOGIN"
-            onPress={() => {
-              navigation.navigate('Menu');
-            }}
+            onPress={() => handleSubmit()}
           />
-          <TouchableOpacity
-            onPress={() => {
-              createAccount();
-            }}
-          >
+          <TouchableOpacity onPress={() => createAccount()}>
             <Text style={styles.createAccount}>CRIAR CONTA</Text>
           </TouchableOpacity>
         </View>

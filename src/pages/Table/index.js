@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image, Text, Button, StatusBar } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import Card from '../../components/Card';
 
 import { cards } from '../../components/Card/cards';
@@ -7,6 +8,7 @@ import Player from '../../components/Player';
 import Bet from '../../components/Bet';
 import Modal from '../../components/Modal';
 
+import * as MatchPlayersActions from '../../store/modules/matchPlayers/actions';
 // import { Container } from './styles';
 
 const styles = StyleSheet.create({
@@ -58,7 +60,49 @@ const styles = StyleSheet.create({
 });
 
 export default function Table() {
-  const [modalBetVisible, setModalBetVisible] = useState(true);
+  const dispatch = useDispatch();
+
+  const { match } = useSelector(state => state.match);
+  const { profile } = useSelector(state => state.user);
+  const { players } = useSelector(state => state.matchPlayers);
+
+  const [heart] = useState('♥');
+  const [user, setUser] = useState({});
+  const [modalBetVisible, setModalBetVisible] = useState(false);
+  const [myCards, setMyCards] = useState([]);
+  const [opponents, setOpponents] = useState([]);
+  const [shackle, setShackle] = useState(null);
+  const [myPlayedCard, setMyPlayedCard] = useState(null);
+  const [opponent01Card, setOpponent01Card] = useState(null);
+  const [opponent02Card, setOpponent02Card] = useState(null);
+  const [opponent03Card, setOpponent03Card] = useState(null);
+  const [opponent04Card, setOpponent04Card] = useState(null);
+  const [opponent05Card, setOpponent05Card] = useState(null);
+  const [opponent06Card, setOpponent06Card] = useState(null);
+  const [opponent07Card, setOpponent07Card] = useState(null);
+
+  useEffect(() => {
+    async function loadPlayers() {
+      try {
+        dispatch(MatchPlayersActions.loadPlayersRequest(match.secure_id));
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    loadPlayers();
+  }, []);
+
+  useEffect(() => {
+    async function loadOpponents() {
+      try {
+        const list = players.filter(el => el.secure_id !== profile.secure_id);
+        setOpponents(list);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    loadOpponents();
+  }, [players]);
 
   function closeModal() {
     setModalBetVisible(false);
@@ -66,7 +110,6 @@ export default function Table() {
 
   return (
     <>
-      <StatusBar hidden />
       <View style={styles.container}>
         <View style={styles.room}>
           <View style={styles.table}>
@@ -85,15 +128,32 @@ export default function Table() {
                     margin: 10,
                   }}
                 >
-                  <Card direction="upside-down" />
-                  <Card direction="upside-down" />
-                  <Card
-                    onPress={() => {
-                      setModalBetVisible(true);
+                  <View style={{ flex: 1 }}>
+                    {opponent05Card && (
+                      <Card direction="upside-down" data={opponent05Card} />
+                    )}
+                  </View>
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: 'center',
                     }}
-                    data={cards[28]}
-                    direction="upside-down"
-                  />
+                  >
+                    {opponent04Card && (
+                      <Card direction="upside-down" data={opponent04Card} />
+                    )}
+                  </View>
+                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                    {opponent03Card && (
+                      <Card
+                        onPress={() => {
+                          setModalBetVisible(true);
+                        }}
+                        data={opponent03Card}
+                        direction="upside-down"
+                      />
+                    )}
+                  </View>
                 </View>
               </View>
               <View
@@ -109,7 +169,9 @@ export default function Table() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Card direction="left" data={cards[26]} />
+                  {opponent06Card && (
+                    <Card direction="left" data={opponent06Card} />
+                  )}
                 </View>
                 <View
                   style={{
@@ -118,7 +180,9 @@ export default function Table() {
                     alignItems: 'flex-end',
                   }}
                 >
-                  <Card direction="right" data={cards[31]} />
+                  {opponent02Card && (
+                    <Card direction="right" data={opponent02Card} />
+                  )}
                 </View>
               </View>
               <View
@@ -128,7 +192,7 @@ export default function Table() {
                   alignItems: 'center',
                 }}
               >
-                <Card />
+                {shackle && <Card data={shackle} />}
               </View>
               <View
                 style={{
@@ -144,7 +208,9 @@ export default function Table() {
                     justifyContent: 'center',
                   }}
                 >
-                  {/* <Card direction="left" data={cards[44]} /> */}
+                  {opponent07Card && (
+                    <Card direction="left" data={opponent07Card} />
+                  )}
                 </View>
                 <View
                   style={{
@@ -153,11 +219,13 @@ export default function Table() {
                     alignItems: 'flex-end',
                   }}
                 >
-                  <Card direction="right" data={cards[22]} />
+                  {opponent01Card && (
+                    <Card direction="right" data={opponent01Card} />
+                  )}
                 </View>
               </View>
               <View style={styles.shackle}>
-                <Card data={cards[27]} />
+                {myPlayedCard && <Card data={myPlayedCard} />}
               </View>
             </View>
           </View>
@@ -169,10 +237,9 @@ export default function Table() {
               styles.playerArea,
             ]}
           >
-            <Player
-              user={{ username: 'abelb13', email: 'abel@email.com', life: 3 }}
-              style={styles.playerSit}
-            />
+            {opponents[4] && (
+              <Player user={opponents[4]} style={styles.playerSit} />
+            )}
           </View>
           <View
             style={[
@@ -180,10 +247,9 @@ export default function Table() {
               styles.playerArea,
             ]}
           >
-            <Player
-              user={{ username: 'kim', email: 'kim@email.com', life: 5 }}
-              style={styles.playerSit}
-            />
+            {opponents[3] && (
+              <Player user={opponents[3]} style={styles.playerSit} />
+            )}
           </View>
           <View
             style={[
@@ -191,14 +257,9 @@ export default function Table() {
               styles.playerArea,
             ]}
           >
-            <Player
-              user={{
-                username: 'Lx Dr e',
-                email: 'alexandre@email.com',
-                life: 2,
-              }}
-              style={styles.playerSit}
-            />
+            {opponents[2] && (
+              <Player user={opponents[2]} style={styles.playerSit} />
+            )}
           </View>
         </View>
         <View
@@ -216,10 +277,9 @@ export default function Table() {
               styles.playerArea,
             ]}
           >
-            <Player
-              user={{ username: 'Linica', email: 'aline@email.com', life: 5 }}
-              style={styles.playerSit}
-            />
+            {opponents[5] && (
+              <Player user={opponents[5]} style={styles.playerSit} />
+            )}
           </View>
           <View style={styles.playerArea} />
           <View
@@ -231,10 +291,9 @@ export default function Table() {
               },
             ]}
           >
-            <Player
-              user={{ username: 'Aninha', email: 'anarita@email.com', life: 5 }}
-              style={styles.playerSit}
-            />
+            {opponents[1] && (
+              <Player user={opponents[1]} style={styles.playerSit} />
+            )}
           </View>
         </View>
         <View
@@ -252,7 +311,9 @@ export default function Table() {
               styles.playerArea,
             ]}
           >
-            <Player style={styles.playerSit} />
+            {opponents[6] && (
+              <Player user={opponents[6]} style={styles.playerSit} />
+            )}
           </View>
           <View style={styles.playerArea} />
           <View
@@ -264,10 +325,9 @@ export default function Table() {
               },
             ]}
           >
-            <Player
-              user={{ username: 'aod16', email: 'aod16@email.com', life: 4 }}
-              style={styles.playerSit}
-            />
+            {opponents[0] && (
+              <Player user={opponents[0]} style={styles.playerSit} />
+            )}
           </View>
         </View>
         <View
@@ -281,22 +341,22 @@ export default function Table() {
         >
           <View style={[styles.areaDivision, { marginTop: 20 }]}>
             <View style={styles.myCardsArea}>
-              <Card data={cards[15]} />
+              {myCards[0] && <Card data={myCards[0]} />}
             </View>
             <View style={styles.myCardsArea}>
-              <Card data={cards[25]} />
+              {myCards[1] && <Card data={myCards[1]} />}
             </View>
             <View style={styles.myCardsArea}>
-              <Card data={cards[38]} />
+              {myCards[2] && <Card data={myCards[2]} />}
             </View>
             <View style={styles.myCardsArea}>
-              <Card data={cards[5]} />
+              {myCards[3] && <Card data={myCards[3]} />}
             </View>
             <View style={styles.myCardsArea}>
-              <Card />
+              {myCards[4] && <Card data={myCards[4]} />}
             </View>
             <View style={styles.myCardsArea}>
-              <Card />
+              {myCards[5] && <Card data={myCards[5]} />}
             </View>
           </View>
           <View
@@ -306,7 +366,9 @@ export default function Table() {
               marginTop: 10,
             }}
           >
-            <Text style={{ color: '#FFF', fontSize: 20 }}>♥♥♥♥♥</Text>
+            <Text style={{ color: '#FFF', fontSize: 20 }}>
+              {heart.repeat(user.life)}
+            </Text>
           </View>
         </View>
       </View>

@@ -1,14 +1,17 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
 
+import { useDispatch, useSelector } from 'react-redux';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import * as UserActions from '../../store/modules/user/actions';
+
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#000',
     justifyContent: 'space-between',
   },
   titleContainer: {
@@ -31,18 +34,34 @@ export default function SignUp({ navigation }) {
   const passwordRef = useRef();
   const confirmPasswordRef = useRef();
 
+  const dispatch = useDispatch();
+
+  const loading = useSelector(state => state.user.loading);
+
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   function handleSubmit() {
+    dispatch(
+      UserActions.signUpRequest(username, email, password, confirmPassword)
+    );
+  }
+
+  function backToLogin() {
     navigation.navigate('SignIn');
   }
 
   return (
     <>
-      <StatusBar hidden />
       <View style={styles.container}>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>CADASTRO</Text>
           <View style={{ width: '70%' }}>
             <Input
+              value={username}
+              onChangeText={value => setUsername(value)}
               placeholder="Nome de Usuário"
               maxLenght={10}
               icon="person-outline"
@@ -50,6 +69,8 @@ export default function SignUp({ navigation }) {
               onSubmitEditing={() => emailRef.current.focus()}
             />
             <Input
+              value={email}
+              onChangeText={value => setEmail(value)}
               autoCorrect={false}
               placeholder="E-Mail"
               icon="mail-outline"
@@ -59,6 +80,8 @@ export default function SignUp({ navigation }) {
               onSubmitEditing={() => passwordRef.current.focus()}
             />
             <Input
+              value={password}
+              onChangeText={value => setPassword(value)}
               secureTextEntry
               placeholder="Senha"
               icon="lock-outline"
@@ -67,6 +90,8 @@ export default function SignUp({ navigation }) {
               onSubmitEditing={() => confirmPasswordRef.current.focus()}
             />
             <Input
+              value={confirmPassword}
+              onChangeText={value => setConfirmPassword(value)}
               secureTextEntry
               placeholder="Confirme sua senha"
               icon="lock-outline"
@@ -76,7 +101,10 @@ export default function SignUp({ navigation }) {
             />
           </View>
 
-          <Button text="CADASTRAR" onPress={handleSubmit} />
+          <Button loading={loading} text="CADASTRAR" onPress={handleSubmit} />
+          <TouchableOpacity onPress={() => backToLogin()}>
+            <Text style={styles.createAccount}>JÁ TENHO CONTA</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </>

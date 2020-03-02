@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, Profiler } from 'react';
 import {
   View,
   StatusBar,
@@ -6,14 +6,21 @@ import {
   Text,
   FlatList,
   Image,
+  Alert,
 } from 'react-native';
 
+import { useSelector, useDispatch } from 'react-redux';
 import Button from '../../components/Button';
+import BackButton from '../../components/BackButton';
+import api from '../../services/api';
+
+import * as MatchActions from '../../store/modules/match/actions';
+import * as MatchPlayersActions from '../../store/modules/matchPlayers/actions';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#000',
     justifyContent: 'space-between',
   },
   title: {
@@ -21,7 +28,6 @@ const styles = StyleSheet.create({
     fontSize: 30,
     color: '#FFF',
     margin: 10,
-    alignSelf: 'center',
   },
   item: {
     flexDirection: 'row',
@@ -46,29 +52,46 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function Room() {
-  const [players, setPlayers] = useState([
-    { name: 'AbelB13', email: 'abel@email.com' },
-    { name: 'Linica', email: 'linica@email.com' },
-    { name: 'AbelB13', email: 'abel@email.com' },
-    { name: 'Linica', email: 'linica@email.com' },
-    { name: 'AbelB13', email: 'abel@email.com' },
-    { name: 'Linica', email: 'linica@email.com' },
-    { name: 'AbelB13', email: 'abel@email.com' },
-    { name: 'Linica', email: 'linica@email.com' },
-  ]);
+export default function Room({ navigation }) {
+  const { match } = useSelector(state => state.match);
+  const { profile } = useSelector(state => state.user);
+  const { players } = useSelector(state => state.matchPlayers);
 
-  function Item({ name, email }) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    async function loadPlayers() {
+      try {
+        dispatch(MatchPlayersActions.loadPlayersRequest(match.secure_id));
+      } catch (error) {
+        console.log(error.response.request);
+      }
+    }
+    loadPlayers();
+  }, []);
+
+  function handleStart() {
+    if (players.length >= 2) {
+      dispatch(MatchActions.startMatchRequest(match.secure_id));
+    } else {
+      Alert.alert(
+        'Erro ao entrar na partida',
+        'São necessários pelo menos 2 jogadores para iniciar a partida'
+      );
+    }
+  }
+
+  function Item({ player }) {
     return (
       <View style={styles.item}>
         <View style={styles.item}>
           <Image
             style={styles.image}
             source={{
-              uri: `https://api.adorable.io/avatars/285/${email}.png`,
+              uri: `https://api.adorable.io/avatars/285/meek.${player.username}.png`,
             }}
           />
-          <Text style={styles.itemTitle}>{name}</Text>
+          <Text style={styles.itemTitle}>{player.username}</Text>
         </View>
       </View>
     );
@@ -76,21 +99,24 @@ export default function Room() {
 
   return (
     <>
-      <StatusBar hidden />
       <View style={styles.container}>
         <View style={{ marginTop: 30, flex: 1 }}>
-          <Text style={styles.title}>PARTICIPANTES</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <BackButton navigation={navigation} page="MatchList" />
+            <Text style={styles.title}>PARTICIPANTES</Text>
+          </View>
+          <Text style={styles.title}>{match.name}</Text>
           <FlatList
             data={players}
-            renderItem={({ item }) => (
-              <Item name={item.name} email={item.email} />
-            )}
-            keyExtractor={item => item.id}
+            renderItem={({ item }) => <Item player={item} />}
+            keyExtractor={item => item.secureId}
           />
         </View>
-        <View style={{ margin: 10, alignItems: 'flex-end' }}>
-          <Button text="INICIAR" />
-        </View>
+        {profile.secure_id === match.user_id && (
+          <View style={{ margin: 10, alignItems: 'flex-end' }}>
+            <Button onPress={() => handleStart()} text="INICIAR" />
+          </View>
+        )}
       </View>
     </>
   );

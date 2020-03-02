@@ -1,15 +1,20 @@
 import React from 'react';
 
+// import { PersistGate } from 'redux-persist/integration/react';
 import { Provider } from 'react-redux';
 
-import Routes from './src/routes';
+import { StatusBar } from 'react-native';
 
-import store from './src/store';
+import { store, persistor } from './src/store';
+import AppRoutes from './src/AppRoutes';
 
 export default function App() {
   return (
     <Provider store={store}>
-      <Routes />
+      {/* <PersistGate persistor={persistor}> */}
+      <StatusBar hidden />
+      <AppRoutes />
+      {/* </PersistGate> */}
     </Provider>
   );
 }

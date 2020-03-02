@@ -2,25 +2,21 @@ import produce from 'immer';
 // import { AsyncStorage } from 'react-native';
 
 const INITIAL_STATE = {
-  token: null,
-  signed: false,
+  players: [],
   loading: false,
 };
 
-export default function auth(state = INITIAL_STATE, action) {
+export default function matchPlayers(state = INITIAL_STATE, action) {
   switch (action.type) {
-    case '@auth/SIGN_IN_REQUEST':
+    case '@match/LOAD_PLAYERS_REQUEST':
       return produce(state, draft => {
         draft.loading = true;
       });
-    case '@auth/SIGN_IN_SUCCESS':
-      // await AsyncStorage.setItem('@MeeK:token', action.payload);
+    case '@match/LOAD_PLAYERS_SUCCESS':
       return produce(state, draft => {
-        draft.token = action.payload.token;
-        draft.signed = true;
-        draft.loading = false;
+        draft.players = action.payload.players;
       });
-    case '@auth/SIGN_IN_FAILURE':
+    case '@match/LOAD_PLAYERS_FAILURE':
       return produce(state, draft => {
         draft.loading = false;
       });
