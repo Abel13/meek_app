@@ -1,13 +1,5 @@
 import React, { useState, useEffect, Profiler } from 'react';
-import {
-  View,
-  StatusBar,
-  StyleSheet,
-  Text,
-  FlatList,
-  Image,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, Text, FlatList, Image, Alert } from 'react-native';
 
 import { useSelector, useDispatch } from 'react-redux';
 import Button from '../../components/Button';
@@ -76,7 +68,7 @@ export default function Room({ navigation }) {
     } else {
       Alert.alert(
         'Erro ao entrar na partida',
-        'São necessários pelo menos 2 jogadores para iniciar a partida'
+        'São necessários pelo menos 3 jogadores para iniciar a partida'
       );
     }
   }
