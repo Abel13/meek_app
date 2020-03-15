@@ -41,15 +41,14 @@ export default function Player({ user }) {
               paddingVertical: 2,
               borderColor: '#FFF',
               borderWidth: 1,
-              borderTopEndRadius: 5,
-              borderTopStartRadius: 5,
+              borderRadius: 5,
               alignItems: 'center',
             }}
           >
-            <Text style={{ color: '#fff' }}>{user.username}</Text>
+            <Text style={{ color: '#fff', fontSize: 12 }}>{user.username}</Text>
 
-            <Text style={{ color: '#fff', fontSize: 7 }}>
-              {heart.repeat(user.life)}
+            <Text style={{ color: '#fff', fontSize: 10 }}>
+              {heart.repeat(user.life_bar)}
             </Text>
           </View>
         </View>

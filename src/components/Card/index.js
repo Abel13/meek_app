@@ -84,7 +84,7 @@ export default function App({ data, direction, ...rest }) {
   useEffect(() => {
     if (data) {
       setSymbol(data.symbol);
-      setFaceDown(false);
+      setFaceDown(data.faceDown);
       switch (data.suit) {
         case 1:
           setColor({ color: '#F00' });
@@ -154,15 +154,15 @@ export default function App({ data, direction, ...rest }) {
   }, [direction]);
 
   return (
-    <>
-      {faceDown ? (
-        <View style={[transform, styles.faceDown, styles.container]}>
-          <View style={styles.faceDownBackground}>
-            <Text style={styles.faceDownText}>MeeK</Text>
+    <TouchableOpacity {...rest} style={[transform, styles.container]}>
+      <>
+        {faceDown ? (
+          <View style={[transform, styles.faceDown, styles.container]}>
+            <View style={styles.faceDownBackground}>
+              <Text style={styles.faceDownText}>MeeK</Text>
+            </View>
           </View>
-        </View>
-      ) : (
-        <TouchableOpacity {...rest} style={[transform, styles.container]}>
+        ) : (
           <View style={styles.faceUp}>
             <View style={styles.topSymbol}>
               <Text style={[color, styles.symbol]}>{symbol}</Text>
@@ -176,8 +176,8 @@ export default function App({ data, direction, ...rest }) {
               <Image style={styles.smallImage} source={suitPath} />
             </View>
           </View>
-        </TouchableOpacity>
-      )}
-    </>
+        )}
+      </>
+    </TouchableOpacity>
   );
 }

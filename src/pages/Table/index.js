@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image, Text, Button, StatusBar } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import Card from '../../components/Card';
 
 import { cards } from '../../components/Card/cards';
@@ -9,7 +10,8 @@ import Bet from '../../components/Bet';
 import Modal from '../../components/Modal';
 
 import * as MatchPlayersActions from '../../store/modules/matchPlayers/actions';
-// import { Container } from './styles';
+import * as RoundActions from '../../store/modules/round/actions';
+import * as TurnActions from '../../store/modules/turn/actions';
 
 const styles = StyleSheet.create({
   container: {
@@ -65,21 +67,23 @@ export default function Table() {
   const { match } = useSelector(state => state.match);
   const { profile } = useSelector(state => state.user);
   const { players } = useSelector(state => state.matchPlayers);
+  const { roundCards, round } = useSelector(state => state.round);
+  const { myTurn, playedCards, turn } = useSelector(state => state.turn);
+
+  const [myPlayedCard, setMyPlayedCard] = useState(null);
+  const [myCards, setMyCards] = useState([]);
 
   const [heart] = useState('♥');
   const [user, setUser] = useState({});
   const [modalBetVisible, setModalBetVisible] = useState(false);
-  const [myCards, setMyCards] = useState([]);
   const [opponents, setOpponents] = useState([]);
+  const [opponentsCard, setOpponentsCard] = useState([]);
   const [shackle, setShackle] = useState(null);
-  const [myPlayedCard, setMyPlayedCard] = useState(null);
-  const [opponent01Card, setOpponent01Card] = useState(null);
-  const [opponent02Card, setOpponent02Card] = useState(null);
-  const [opponent03Card, setOpponent03Card] = useState(null);
-  const [opponent04Card, setOpponent04Card] = useState(null);
-  const [opponent05Card, setOpponent05Card] = useState(null);
-  const [opponent06Card, setOpponent06Card] = useState(null);
-  const [opponent07Card, setOpponent07Card] = useState(null);
+
+  const [readyToBet, setReadyToBet] = useState(false);
+  const [readyToPlay, setReadyToPlay] = useState(false);
+  const [stepBet, setStepBet] = useState(false);
+  const [stepPlay, setStepPlay] = useState(false);
 
   useEffect(() => {
     async function loadPlayers() {
@@ -97,12 +101,91 @@ export default function Table() {
       try {
         const list = players.filter(el => el.secure_id !== profile.secure_id);
         setOpponents(list);
+        setUser({ ...profile, life: 5 });
       } catch (error) {
         console.log(error);
       }
     }
     loadOpponents();
   }, [players]);
+
+  useEffect(() => {
+    async function loadRound() {
+      try {
+        dispatch(RoundActions.getActualRoundRequest(match.secure_id));
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    loadRound();
+  }, [match]);
+
+  useEffect(() => {
+    async function loadCards() {
+      if (round.secure_id) {
+        try {
+          dispatch(RoundActions.getRoundCardsRequest(round.secure_id));
+          setShackle(cards.find(c => c.id === round.shackle));
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+
+    loadCards();
+  }, [round]);
+
+  useEffect(() => {
+    function setPlayedCards() {
+      const oCards = [];
+      playedCards.forEach(element => {
+        oCards.push(cards.filter(e => e.id === element.card)[0]);
+      });
+      setOpponentsCard(oCards);
+    }
+    setPlayedCards();
+  }, [playedCards]);
+
+  useEffect(() => {
+    function playMyCard() {
+      const faceDown = true;
+      if (myTurn)
+        setMyPlayedCard({
+          ...cards.filter(e => e.id === myTurn.card)[0],
+          faceDown,
+        });
+    }
+    playMyCard();
+  }, [myTurn]);
+
+  useEffect(() => {
+    async function loadTurn() {
+      const mCards = [];
+      roundCards.forEach(element => {
+        mCards.push(cards.filter(e => e.id === element.card)[0]);
+      });
+      setMyCards(mCards);
+      if (round.secure_id) {
+        try {
+          dispatch(TurnActions.getActualTurnRequest(round.secure_id));
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+    loadTurn();
+  }, [roundCards]);
+
+  useEffect(() => {
+    async function loadPlayedCards() {
+      try {
+        dispatch(TurnActions.getPlayedCardsRequest(turn.secure_id));
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    loadPlayedCards();
+  }, [turn]);
 
   function closeModal() {
     setModalBetVisible(false);
@@ -129,8 +212,8 @@ export default function Table() {
                   }}
                 >
                   <View style={{ flex: 1 }}>
-                    {opponent05Card && (
-                      <Card direction="upside-down" data={opponent05Card} />
+                    {opponentsCard[4] && (
+                      <Card direction="upside-down" data={opponentsCard[4]} />
                     )}
                   </View>
                   <View
@@ -139,17 +222,17 @@ export default function Table() {
                       alignItems: 'center',
                     }}
                   >
-                    {opponent04Card && (
-                      <Card direction="upside-down" data={opponent04Card} />
+                    {opponentsCard[3] && (
+                      <Card direction="upside-down" data={opponentsCard[3]} />
                     )}
                   </View>
                   <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                    {opponent03Card && (
+                    {opponentsCard[2] && (
                       <Card
                         onPress={() => {
                           setModalBetVisible(true);
                         }}
-                        data={opponent03Card}
+                        data={opponentsCard[2]}
                         direction="upside-down"
                       />
                     )}
@@ -169,8 +252,8 @@ export default function Table() {
                     justifyContent: 'center',
                   }}
                 >
-                  {opponent06Card && (
-                    <Card direction="left" data={opponent06Card} />
+                  {opponentsCard[5] && (
+                    <Card direction="left" data={opponentsCard[5]} />
                   )}
                 </View>
                 <View
@@ -180,8 +263,8 @@ export default function Table() {
                     alignItems: 'flex-end',
                   }}
                 >
-                  {opponent02Card && (
-                    <Card direction="right" data={opponent02Card} />
+                  {opponentsCard[1] && (
+                    <Card direction="right" data={opponentsCard[1]} />
                   )}
                 </View>
               </View>
@@ -208,8 +291,8 @@ export default function Table() {
                     justifyContent: 'center',
                   }}
                 >
-                  {opponent07Card && (
-                    <Card direction="left" data={opponent07Card} />
+                  {opponentsCard[6] && (
+                    <Card direction="left" data={opponentsCard[6]} />
                   )}
                 </View>
                 <View
@@ -219,8 +302,8 @@ export default function Table() {
                     alignItems: 'flex-end',
                   }}
                 >
-                  {opponent01Card && (
-                    <Card direction="right" data={opponent01Card} />
+                  {opponentsCard[0] && (
+                    <Card direction="right" data={opponentsCard[0]} />
                   )}
                 </View>
               </View>
@@ -369,6 +452,21 @@ export default function Table() {
             <Text style={{ color: '#FFF', fontSize: 20 }}>
               {heart.repeat(user.life)}
             </Text>
+            {readyToBet && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#4A4',
+                  padding: 5,
+                  borderColor: '#393',
+                  borderWidth: 1,
+                  borderRadius: 5,
+                  margin: 5,
+                }}
+                onPress={() => setModalBetVisible(!modalBetVisible)}
+              >
+                <Text style={{ color: '#FFF' }}>APOSTAR</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -379,7 +477,7 @@ export default function Table() {
           visible={modalBetVisible}
           confirmText="APOSTAR"
         >
-          <Bet max={5} blocked={1} />
+          <Bet max={5} blocked={null} />
         </Modal>
       </View>
     </>
