@@ -8,6 +8,8 @@ import {
   getRoundCardsFailure,
   getActualRoundSuccess,
   getActualRoundFailure,
+  betFailure,
+  betSuccess,
 } from './actions';
 
 export function* getRoundCards({ payload }) {
@@ -20,27 +22,26 @@ export function* getRoundCards({ payload }) {
 
     yield put(getRoundCardsSuccess(cards));
   } catch (error) {
-    Alert.alert('Erro', `Não foi possível carregar as cartas!`);
+    Alert.alert('Erro', `Não foi possível carregar as cartas da rodada!`);
+    console.log(error);
     yield put(getRoundCardsFailure());
   }
 }
 
-export function* getRound({ payload }) {
+export function* putBet({ payload }) {
   try {
-    const { matchId } = payload;
+    const { bet, roundId } = payload;
 
-    const response = yield call(api.get, `rounds/${matchId}`);
+    const response = yield call(api.put, `rounds/${roundId}`, { bet });
 
-    const { round } = response.data;
-
-    yield put(getActualRoundSuccess(round));
+    yield put(betSuccess(response.data));
   } catch (error) {
-    Alert.alert('Erro', 'Não foi possível carregar a rodada');
-    yield put(getActualRoundFailure());
+    Alert.alert('Erro', 'Não foi possível realizar a aposta');
+    yield put(betFailure());
   }
 }
 
 export default all([
   takeLatest('@round/GET_ROUND_CARDS_REQUEST', getRoundCards),
-  takeLatest('@round/GET_ACTUAL_ROUND_REQUEST', getRound),
+  takeLatest('@round/PUT_BET_REQUEST', putBet),
 ]);

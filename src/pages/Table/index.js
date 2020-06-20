@@ -9,7 +9,6 @@ import Player from '../../components/Player';
 import Bet from '../../components/Bet';
 import Modal from '../../components/Modal';
 
-import * as MatchPlayersActions from '../../store/modules/matchPlayers/actions';
 import * as RoundActions from '../../store/modules/round/actions';
 import * as TurnActions from '../../store/modules/turn/actions';
 
@@ -64,61 +63,82 @@ const styles = StyleSheet.create({
 export default function Table() {
   const dispatch = useDispatch();
 
-  const { match } = useSelector(state => state.match);
-  const { profile } = useSelector(state => state.user);
-  const { players } = useSelector(state => state.matchPlayers);
-  const { roundCards, round } = useSelector(state => state.round);
-  const { myTurn, playedCards, turn } = useSelector(state => state.turn);
+  const { match } = useSelector(state => state.match); // PARTIDA ATUAL
+  const { profile } = useSelector(state => state.user); // PERFIL USUARIO
+  const { players } = useSelector(state => state.matchPlayers); // TODOS OS JOGADORES DA PARTIDA
+  const { roundCards } = useSelector(state => state.round); //
+  const {
+    myTurn,
+    playedCards,
+    turn,
+    round,
+    currentPlayer,
+    stepBet,
+    blockedBet,
+    endOfBet,
+    betsPlaced,
+  } = useSelector(state => state.turn);
 
   const [myPlayedCard, setMyPlayedCard] = useState(null);
   const [myCards, setMyCards] = useState([]);
+  const [myBet, setMyBet] = useState('-');
 
-  const [heart] = useState('♥');
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState(null); // INSERIDO APOS CARREGAR OS JOGADORES
   const [modalBetVisible, setModalBetVisible] = useState(false);
   const [opponents, setOpponents] = useState([]);
   const [opponentsCard, setOpponentsCard] = useState([]);
   const [shackle, setShackle] = useState(null);
 
   const [readyToBet, setReadyToBet] = useState(false);
+  const [betMax, setBetMax] = useState(0);
   const [readyToPlay, setReadyToPlay] = useState(false);
-  const [stepBet, setStepBet] = useState(false);
   const [stepPlay, setStepPlay] = useState(false);
 
+  const heart = '♥';
+
   useEffect(() => {
-    async function loadPlayers() {
-      try {
-        dispatch(MatchPlayersActions.loadPlayersRequest(match.secure_id));
-      } catch (error) {
-        console.log(error);
-      }
+    if (betsPlaced && betsPlaced.length > 0 && user) {
+      const bets = opponents.map(element => {
+        const player = betsPlaced.find(el => el.user_id === element.secure_id);
+
+        return { ...element, bet: player.bet };
+      });
+
+      const me = betsPlaced.find(el => el.user_id === user.secure_id);
+      setMyBet(me.bet);
+      setOpponents(bets);
     }
-    loadPlayers();
-  }, []);
+  }, [betsPlaced, user]);
+
+  useEffect(() => {
+    if (
+      currentPlayer &&
+      currentPlayer.secure_id === user.secure_id &&
+      stepBet
+    ) {
+      setReadyToBet(true);
+    } else {
+      setReadyToBet(false);
+    }
+  }, [currentPlayer]);
 
   useEffect(() => {
     async function loadOpponents() {
       try {
-        const list = players.filter(el => el.secure_id !== profile.secure_id);
-        setOpponents(list);
-        setUser({ ...profile, life: 5 });
+        if (players) {
+          const list = players.filter(el => el.secure_id !== profile.secure_id);
+          const me = players.filter(
+            el => el.secure_id === profile.secure_id
+          )[0];
+          setOpponents(list);
+          setUser(me);
+        }
       } catch (error) {
         console.log(error);
       }
     }
     loadOpponents();
   }, [players]);
-
-  useEffect(() => {
-    async function loadRound() {
-      try {
-        dispatch(RoundActions.getActualRoundRequest(match.secure_id));
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    loadRound();
-  }, [match]);
 
   useEffect(() => {
     async function loadCards() {
@@ -132,11 +152,17 @@ export default function Table() {
       }
     }
 
-    loadCards();
+    if (round) {
+      loadCards();
+    }
   }, [round]);
 
   useEffect(() => {
     function setPlayedCards() {
+      if (playedCards.length === 0) {
+        setMyPlayedCard(null);
+      }
+
       const oCards = [];
       playedCards.forEach(element => {
         oCards.push(cards.filter(e => e.id === element.card)[0]);
@@ -148,7 +174,7 @@ export default function Table() {
 
   useEffect(() => {
     function playMyCard() {
-      const faceDown = true;
+      const faceDown = !endOfBet;
       if (myTurn)
         setMyPlayedCard({
           ...cards.filter(e => e.id === myTurn.card)[0],
@@ -156,7 +182,7 @@ export default function Table() {
         });
     }
     playMyCard();
-  }, [myTurn]);
+  }, [myTurn, endOfBet]);
 
   useEffect(() => {
     async function loadTurn() {
@@ -164,13 +190,8 @@ export default function Table() {
       roundCards.forEach(element => {
         mCards.push(cards.filter(e => e.id === element.card)[0]);
       });
-      setMyCards(mCards);
-      if (round.secure_id) {
-        try {
-          dispatch(TurnActions.getActualTurnRequest(round.secure_id));
-        } catch (error) {
-          console.log(error);
-        }
+      if (round && round.total_turns > 1) {
+        setMyCards(mCards);
       }
     }
     loadTurn();
@@ -178,17 +199,40 @@ export default function Table() {
 
   useEffect(() => {
     async function loadPlayedCards() {
-      try {
-        dispatch(TurnActions.getPlayedCardsRequest(turn.secure_id));
-      } catch (error) {
-        console.log(error);
+      if (turn) {
+        // console.log('TURNO:', turn);
+        setBetMax(turn.turn_number);
+        try {
+          dispatch(TurnActions.getPlayedCardsRequest(turn.secure_id));
+        } catch (error) {
+          console.log(error);
+        }
       }
     }
     loadPlayedCards();
   }, [turn]);
 
-  function closeModal() {
-    setModalBetVisible(false);
+  useEffect(() => {
+    const id = setInterval(() => {
+      try {
+        console.log(match.secure_id);
+        dispatch(TurnActions.updateGame(match.secure_id));
+      } catch (error) {
+        console.log(error);
+        // console.log(error.response.request);
+      }
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  async function closeModal(data) {
+    try {
+      setReadyToBet(false);
+      await dispatch(RoundActions.betRequest(data, round.secure_id));
+      setModalBetVisible(false);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return (
@@ -450,7 +494,10 @@ export default function Table() {
             }}
           >
             <Text style={{ color: '#FFF', fontSize: 20 }}>
-              {heart.repeat(user.life)}
+              {heart.repeat(user ? user.life_bar : 0)}
+            </Text>
+            <Text style={{ color: '#fff', fontSize: 14 }}>
+              {`${0} / ${myBet ?? '-'}`}
             </Text>
             {readyToBet && (
               <TouchableOpacity
@@ -471,13 +518,13 @@ export default function Table() {
         </View>
       </View>
       <View>
-        <Modal
-          title="QUAL SUA APOSTA?"
-          closeModal={() => closeModal()}
-          visible={modalBetVisible}
-          confirmText="APOSTAR"
-        >
-          <Bet max={5} blocked={null} />
+        <Modal title="QUAL SUA APOSTA?" visible={modalBetVisible}>
+          <Bet
+            confirmText="APOSTAR"
+            max={betMax}
+            blocked={blockedBet}
+            closeModal={closeModal}
+          />
         </Modal>
       </View>
     </>

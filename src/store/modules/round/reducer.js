@@ -6,35 +6,29 @@ const INITIAL_STATE = {
 };
 
 export default function round(state = INITIAL_STATE, action) {
-  switch (action.type) {
-    case '@round/GET_ROUND_CARDS_REQUEST':
-      return produce(state, draft => {
+  return produce(state, draft => {
+    switch (action.type) {
+      case '@round/GET_ROUND_CARDS_REQUEST':
         draft.loading = true;
-      });
-    case '@round/GET_ROUND_CARDS_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@round/GET_ROUND_CARDS_SUCCESS':
         draft.loading = true;
         draft.roundCards = action.payload.cards;
-      });
-    case '@round/GET_ROUND_CARDS_FAILURE':
-      return produce(state, draft => {
+        return draft;
+      case '@round/GET_ROUND_CARDS_FAILURE':
         draft.loading = true;
-      });
-
-    case '@round/GET_ACTUAL_ROUND_REQUEST':
-      return produce(state, draft => {
+        return draft;
+      case '@round/PUT_BET_REQUEST':
         draft.loading = true;
-      });
-    case '@round/GET_ACTUAL_ROUND_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@round/PUT_BET_SUCCESS':
         draft.loading = false;
-        draft.round = action.payload.round;
-      });
-    case '@round/GET_ACTUAL_ROUND_FAILURE':
-      return produce(state, draft => {
+        return draft;
+      case '@round/PUT_BET_FAILURE':
         draft.loading = false;
-      });
-    default:
-      return state;
-  }
+        return draft;
+      default:
+        return state;
+    }
+  });
 }
