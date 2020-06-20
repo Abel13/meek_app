@@ -1,23 +1,3 @@
-export function getActualTurnRequest(roundId) {
-  return {
-    type: '@turn/GET_ACTUAL_TURN_REQUEST',
-    payload: { roundId },
-  };
-}
-
-export function getActualTurnSuccess(turn) {
-  return {
-    type: '@turn/GET_ACTUAL_TURN_SUCCESS',
-    payload: { turn },
-  };
-}
-
-export function getActualTurnFailure() {
-  return {
-    type: '@turn/GET_ACTUAL_TURN_FAILURE',
-  };
-}
-
 export function getPlayedCardsRequest(turnId) {
   return {
     type: '@turn/GET_PLAYED_CARDS_REQUEST',
@@ -35,5 +15,25 @@ export function getPlayedCardsSuccess(data) {
 export function getPlayedCardsFailure() {
   return {
     type: '@turn/GET_PLAYED_CARDS_FAILURE',
+  };
+}
+
+export function updateGame(matchId) {
+  return {
+    type: '@turn/GET_CURRENT_PLAYER_REQUEST',
+    payload: { matchId },
+  };
+}
+
+export function getCurrentPlayerSuccess(data) {
+  return {
+    type: '@turn/GET_CURRENT_PLAYER_SUCCESS',
+    payload: { data },
+  };
+}
+
+export function getCurrentPlayerFailure() {
+  return {
+    type: '@turn/GET_CURRENT_PLAYER_FAILURE',
   };
 }

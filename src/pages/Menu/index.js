@@ -10,8 +10,9 @@ import {
 import PropTypes from 'prop-types';
 
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import Button from '../../components/Button';
+import * as AuthActions from '../../store/modules/auth/actions';
 
 const styles = StyleSheet.create({
   container: {
@@ -19,7 +20,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  menu: {},
+  menu: {
+    width: '80%',
+    height: '50%',
+    alignItems: 'center',
+  },
   menuTitle: {
     color: '#FFF',
     fontSize: 50,
@@ -48,10 +53,17 @@ const styles = StyleSheet.create({
     borderRadius: 150,
   },
   profileButtons: { width: 50, height: 50, resizeMode: 'contain' },
+  logo: {
+    width: '100%',
+    height: '50%',
+    resizeMode: 'contain',
+  },
 });
 
 export default function Menu({ navigation }) {
   const { profile } = useSelector(state => state.user);
+
+  const dispatch = useDispatch();
 
   return (
     <>
@@ -81,7 +93,9 @@ export default function Menu({ navigation }) {
                     source={require('../../../assets/leaderboards.png')}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => dispatch(AuthActions.signOutRequest())}
+                >
                   <Image
                     style={styles.profileButtons}
                     source={require('../../../assets/achievements.png')}
@@ -102,7 +116,10 @@ export default function Menu({ navigation }) {
         </View>
         <View style={styles.container}>
           <View style={styles.menu}>
-            <Text style={styles.menuTitle}>MeeK</Text>
+            <Image
+              style={styles.logo}
+              source={require('../../../assets/logo.png')}
+            />
             <Button
               text="JOGAR"
               onPress={() => navigation.navigate('MatchList')}

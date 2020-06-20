@@ -1,3 +1,9 @@
+export function signOutRequest() {
+  return {
+    type: '@auth/SIGN_OUT_REQUEST',
+  };
+}
+
 export function signInRequest(email, password) {
   return {
     type: '@auth/SIGN_IN_REQUEST',

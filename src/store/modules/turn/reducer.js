@@ -1,43 +1,51 @@
 import produce from 'immer';
 
 const INITIAL_STATE = {
+  loading: false,
   turn: null,
+  round: null,
   myTurn: null,
+  currentPlayer: null,
   playedCards: [],
+  stepBet: false,
+  stepPlay: false,
+  blockedBet: null,
+  endOfBet: false,
+  betsPlaced: [],
 };
 
 export default function turn(state = INITIAL_STATE, action) {
-  switch (action.type) {
-    case '@turn/GET_ACTUAL_TURN_REQUEST':
-      return produce(state, draft => {
+  return produce(state, draft => {
+    switch (action.type) {
+      case '@turn/GET_PLAYED_CARDS_REQUEST':
         draft.loading = true;
-      });
-    case '@turn/GET_ACTUAL_TURN_SUCCESS':
-      return produce(state, draft => {
-        draft.loading = true;
-        draft.turn = action.payload.turn;
-      });
-    case '@turn/GET_ACTUAL_TURN_FAILURE':
-      return produce(state, draft => {
-        draft.loading = true;
-      });
-
-    case '@turn/GET_PLAYED_CARDS_REQUEST':
-      return produce(state, draft => {
-        draft.loading = true;
-      });
-    case '@turn/GET_PLAYED_CARDS_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@turn/GET_PLAYED_CARDS_SUCCESS':
         draft.loading = true;
         draft.myTurn = action.payload.data.myPlayedCard;
         draft.playedCards = action.payload.data.playedCards;
-      });
-    case '@turn/GET_PLAYED_CARDS_FAILURE':
-      return produce(state, draft => {
+        return draft;
+      case '@turn/GET_PLAYED_CARDS_FAILURE':
         draft.loading = true;
-      });
-
-    default:
-      return state;
-  }
+        return draft;
+      case '@turn/GET_CURRENT_PLAYER_REQUEST':
+        draft.loading = true;
+        return draft;
+      case '@turn/GET_CURRENT_PLAYER_SUCCESS':
+        draft.currentPlayer = action.payload.data.actualPlayer;
+        draft.stepBet = action.payload.data.stepBet;
+        draft.endOfBet = action.payload.data.endOfBet;
+        draft.betsPlaced = action.payload.data.betsPlaced;
+        draft.blockedBet = action.payload.data.blockedBet;
+        draft.turn = action.payload.data.turn;
+        draft.round = action.payload.data.round;
+        draft.loading = false;
+        return draft;
+      case '@turn/GET_CURRENT_PLAYER_FAILURE':
+        draft.loading = false;
+        return draft;
+      default:
+        return state;
+    }
+  });
 }

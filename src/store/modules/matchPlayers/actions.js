@@ -5,10 +5,10 @@ export function loadPlayersRequest(matchId) {
   };
 }
 
-export function loadPlayersSuccess(players) {
+export function loadPlayersSuccess({ players, started }) {
   return {
     type: '@match/LOAD_PLAYERS_SUCCESS',
-    payload: { players },
+    payload: { players, started },
   };
 }
 

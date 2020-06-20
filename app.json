@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "meek",
-    "slug": "MeeKapp",
+    "name": "4dinha",
+    "slug": "4dinha",
     "privacy": "public",
     "sdkVersion": "36.0.0",
     "platforms": ["ios", "android", "web"],
@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "black"
+      "backgroundColor": "#000000"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -19,7 +19,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.b13.meek",
+      "bundleIdentifier": "com.b13.4dinha",
       "buildNumber": "1.0.0"
     },
     "android": {

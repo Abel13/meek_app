@@ -18,22 +18,22 @@ export function getRoundCardsFailure() {
   };
 }
 
-export function getActualRoundRequest(matchId) {
+export function betRequest(bet, roundId) {
   return {
-    type: '@round/GET_ACTUAL_ROUND_REQUEST',
-    payload: { matchId },
+    type: '@round/PUT_BET_REQUEST',
+    payload: { bet, roundId },
   };
 }
 
-export function getActualRoundSuccess(round) {
+export function betSuccess(data) {
   return {
-    type: '@round/GET_ACTUAL_ROUND_SUCCESS',
-    payload: { round },
+    type: '@round/PUT_BET_SUCCESS',
+    payload: { data },
   };
 }
 
-export function getActualRoundFailure() {
+export function betFailure() {
   return {
-    type: '@round/GET_ACTUAL_ROUND_FAILURE',
+    type: '@round/PUT_BET_FAILURE',
   };
 }
