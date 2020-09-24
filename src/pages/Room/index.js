@@ -111,26 +111,26 @@ export default function Room({ navigation }) {
           </Text>
         </View>
       ) : (
-        <View style={styles.container}>
-          <View style={{ marginTop: 30, flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <BackButton navigation={navigation} page="MatchList" />
-              <Text style={styles.title}>PARTICIPANTES</Text>
+          <View style={styles.container}>
+            <View style={{ marginTop: 30, flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <BackButton navigation={navigation} page="MatchList" />
+                <Text style={styles.title}>PARTICIPANTES</Text>
+              </View>
+              <Text style={styles.title}>{match.name}</Text>
+              <FlatList
+                data={players}
+                renderItem={({ item }) => <Item player={item} />}
+                keyExtractor={item => item.secureId}
+              />
             </View>
-            <Text style={styles.title}>{match.name}</Text>
-            <FlatList
-              data={players}
-              renderItem={({ item }) => <Item player={item} />}
-              keyExtractor={item => item.secureId}
-            />
+            {profile.secure_id === match.user_id && (
+              <View style={{ margin: 10, alignItems: 'flex-end' }}>
+                <Button onPress={() => handleStart()} text="INICIAR" />
+              </View>
+            )}
           </View>
-          {profile.secure_id === match.user_id && (
-            <View style={{ margin: 10, alignItems: 'flex-end' }}>
-              <Button onPress={() => handleStart()} text="INICIAR" />
-            </View>
-          )}
-        </View>
-      )}
+        )}
     </>
   );
 }

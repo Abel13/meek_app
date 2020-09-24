@@ -1,5 +1,4 @@
 import produce from 'immer';
-// import { AsyncStorage } from 'react-native';
 
 const INITIAL_STATE = {
   token: null,
@@ -18,7 +17,6 @@ export default function auth(state = INITIAL_STATE, action) {
         draft.signed = false;
         return draft;
       case '@auth/SIGN_IN_SUCCESS':
-        // await AsyncStorage.setItem('@MeeK:token', action.payload);
         draft.token = action.payload.token;
         draft.signed = true;
         draft.loading = false;

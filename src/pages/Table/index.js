@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, Text, Button, StatusBar } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Text,
+  Button,
+  StatusBar,
+  Alert,
+} from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Card from '../../components/Card';
@@ -53,7 +61,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
-  shackle: {
+  myArea: {
     flex: 0.7,
     justifyContent: 'center',
     alignItems: 'center',
@@ -68,12 +76,13 @@ export default function Table() {
   const { players } = useSelector(state => state.matchPlayers); // TODOS OS JOGADORES DA PARTIDA
   const { roundCards } = useSelector(state => state.round); //
   const {
-    myTurn,
+    turnCardsPlayed,
     playedCards,
     turn,
     round,
     currentPlayer,
     stepBet,
+    stepPlay,
     blockedBet,
     endOfBet,
     betsPlaced,
@@ -90,9 +99,9 @@ export default function Table() {
   const [shackle, setShackle] = useState(null);
 
   const [readyToBet, setReadyToBet] = useState(false);
-  const [betMax, setBetMax] = useState(0);
   const [readyToPlay, setReadyToPlay] = useState(false);
-  const [stepPlay, setStepPlay] = useState(false);
+  const [betMax, setBetMax] = useState(0);
+  const [myTurn, setMyTurn] = useState(false);
 
   const heart = '♥';
 
@@ -101,7 +110,9 @@ export default function Table() {
       const bets = opponents.map(element => {
         const player = betsPlaced.find(el => el.user_id === element.secure_id);
 
-        return { ...element, bet: player.bet };
+        if (player) {
+          return { ...element, bet: player.bet };
+        }
       });
 
       const me = betsPlaced.find(el => el.user_id === user.secure_id);
@@ -111,16 +122,21 @@ export default function Table() {
   }, [betsPlaced, user]);
 
   useEffect(() => {
-    if (
-      currentPlayer &&
-      currentPlayer.secure_id === user.secure_id &&
-      stepBet
-    ) {
-      setReadyToBet(true);
+    if (myTurn) {
+      console.log('EU', stepBet, stepPlay);
+      setReadyToBet(stepBet);
+      setReadyToPlay(stepPlay);
     } else {
       setReadyToBet(false);
+      setReadyToPlay(false);
     }
-  }, [currentPlayer]);
+  }, [myTurn]);
+
+  useEffect(() => {
+    if (currentPlayer && user) {
+      setMyTurn(currentPlayer.secure_id === user.secure_id);
+    }
+  }, [currentPlayer, stepBet, stepPlay]);
 
   useEffect(() => {
     async function loadOpponents() {
@@ -159,7 +175,7 @@ export default function Table() {
 
   useEffect(() => {
     function setPlayedCards() {
-      if (playedCards.length === 0) {
+      if (turnCardsPlayed && !turnCardsPlayed.card) {
         setMyPlayedCard(null);
       }
 
@@ -174,15 +190,16 @@ export default function Table() {
 
   useEffect(() => {
     function playMyCard() {
-      const faceDown = !endOfBet;
-      if (myTurn)
+      if (turnCardsPlayed && turnCardsPlayed.card) {
+        const faceDown = !endOfBet;
         setMyPlayedCard({
-          ...cards.filter(e => e.id === myTurn.card)[0],
+          ...cards.filter(e => e.id === turnCardsPlayed.card)[0],
           faceDown,
         });
+      }
     }
     playMyCard();
-  }, [myTurn, endOfBet]);
+  }, [turnCardsPlayed, endOfBet]);
 
   useEffect(() => {
     async function loadTurn() {
@@ -200,8 +217,7 @@ export default function Table() {
   useEffect(() => {
     async function loadPlayedCards() {
       if (turn) {
-        // console.log('TURNO:', turn);
-        setBetMax(turn.turn_number);
+        setBetMax(round.total_turns);
         try {
           dispatch(TurnActions.getPlayedCardsRequest(turn.secure_id));
         } catch (error) {
@@ -215,8 +231,9 @@ export default function Table() {
   useEffect(() => {
     const id = setInterval(() => {
       try {
-        console.log(match.secure_id);
+        // console.log(match.secure_id);
         dispatch(TurnActions.updateGame(match.secure_id));
+        // console.log(myPlayedCard);
       } catch (error) {
         console.log(error);
         // console.log(error.response.request);
@@ -232,6 +249,21 @@ export default function Table() {
       setModalBetVisible(false);
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  async function play(card) {
+    if (myTurn && stepPlay) {
+      console.log('CARD: ', card);
+      try {
+        console.log('STARTING');
+        await dispatch(TurnActions.playCardRequest(card.id, turn.secure_id));
+        console.log('RETURNED');
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      Alert.alert('Ops!', 'Faça sua aposta ou aguarde sua vez!');
     }
   }
 
@@ -351,7 +383,7 @@ export default function Table() {
                   )}
                 </View>
               </View>
-              <View style={styles.shackle}>
+              <View style={styles.myArea}>
                 {myPlayedCard && <Card data={myPlayedCard} />}
               </View>
             </View>
@@ -392,7 +424,10 @@ export default function Table() {
         <View
           style={[
             styles.areaDivision,
-            { flex: 1, justifyContent: 'space-between' },
+            {
+              flex: 1,
+              justifyContent: 'space-between',
+            },
           ]}
         >
           <View
@@ -426,7 +461,10 @@ export default function Table() {
         <View
           style={[
             styles.areaDivision,
-            { flex: 1, justifyContent: 'space-between' },
+            {
+              flex: 0.8,
+              justifyContent: 'space-between',
+            },
           ]}
         >
           <View
@@ -461,31 +499,43 @@ export default function Table() {
           style={[
             {
               marginHorizontal: '10%',
-              flex: 0.8,
+              flex: 0.7,
               zIndex: 2,
             },
           ]}
         >
-          <View style={[styles.areaDivision, { marginTop: 20 }]}>
-            <View style={styles.myCardsArea}>
-              {myCards[0] && <Card data={myCards[0]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[1] && <Card data={myCards[1]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[2] && <Card data={myCards[2]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[3] && <Card data={myCards[3]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[4] && <Card data={myCards[4]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[5] && <Card data={myCards[5]} />}
-            </View>
-          </View>
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 10,
+              backgroundColor: myTurn ? '#4A4' : '#944',
+              alignSelf: 'flex-end',
+            }}
+          />
+
+          {readyToBet ? (
+            <TouchableOpacity
+              style={{
+                width: '50%',
+                backgroundColor: '#4A4',
+                padding: 5,
+                borderColor: '#393',
+                borderWidth: 1,
+                borderRadius: 5,
+                alignSelf: 'center',
+              }}
+              onPress={() => setModalBetVisible(!modalBetVisible)}
+            >
+              <Text style={{ color: '#FFF', textAlign: 'center' }}>
+                APOSTAR
+              </Text>
+            </TouchableOpacity>
+          ) : (
+              <Text style={{ color: '#fff', fontSize: 14, textAlign: 'center' }}>
+                {`${0} / ${myBet ?? '-'}`}
+              </Text>
+            )}
           <View
             style={{
               alignItems: 'center',
@@ -496,24 +546,26 @@ export default function Table() {
             <Text style={{ color: '#FFF', fontSize: 20 }}>
               {heart.repeat(user ? user.life_bar : 0)}
             </Text>
-            <Text style={{ color: '#fff', fontSize: 14 }}>
-              {`${0} / ${myBet ?? '-'}`}
-            </Text>
-            {readyToBet && (
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#4A4',
-                  padding: 5,
-                  borderColor: '#393',
-                  borderWidth: 1,
-                  borderRadius: 5,
-                  margin: 5,
-                }}
-                onPress={() => setModalBetVisible(!modalBetVisible)}
-              >
-                <Text style={{ color: '#FFF' }}>APOSTAR</Text>
-              </TouchableOpacity>
-            )}
+          </View>
+          <View style={[styles.areaDivision, { marginBottom: 25 }]}>
+            <View style={styles.myCardsArea}>
+              {myCards[0] && <Card onPress={play} data={myCards[0]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[1] && <Card onPress={play} data={myCards[1]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[2] && <Card onPress={play} data={myCards[2]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[3] && <Card onPress={play} data={myCards[3]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[4] && <Card onPress={play} data={myCards[4]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[5] && <Card onPress={play} data={myCards[5]} />}
+            </View>
           </View>
         </View>
       </View>
