@@ -37,3 +37,10 @@ export function getCurrentPlayerFailure() {
     type: '@turn/GET_CURRENT_PLAYER_FAILURE',
   };
 }
+
+export function playCardRequest(card, turnId) {
+  return {
+    type: '@turn/PLAY_CARD_REQUEST',
+    payload: { card, turnId },
+  };
+}

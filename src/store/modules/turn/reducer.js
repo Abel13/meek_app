@@ -4,7 +4,7 @@ const INITIAL_STATE = {
   loading: false,
   turn: null,
   round: null,
-  myTurn: null,
+  turnCardsPlayed: null, // my position and card id
   currentPlayer: null,
   playedCards: [],
   stepBet: false,
@@ -22,7 +22,7 @@ export default function turn(state = INITIAL_STATE, action) {
         return draft;
       case '@turn/GET_PLAYED_CARDS_SUCCESS':
         draft.loading = true;
-        draft.myTurn = action.payload.data.myPlayedCard;
+        draft.turnCardsPlayed = action.payload.data.myPlayedCard;
         draft.playedCards = action.payload.data.playedCards;
         return draft;
       case '@turn/GET_PLAYED_CARDS_FAILURE':
@@ -34,6 +34,7 @@ export default function turn(state = INITIAL_STATE, action) {
       case '@turn/GET_CURRENT_PLAYER_SUCCESS':
         draft.currentPlayer = action.payload.data.actualPlayer;
         draft.stepBet = action.payload.data.stepBet;
+        draft.stepPlay = action.payload.data.stepPlay;
         draft.endOfBet = action.payload.data.endOfBet;
         draft.betsPlaced = action.payload.data.betsPlaced;
         draft.blockedBet = action.payload.data.blockedBet;
@@ -43,6 +44,9 @@ export default function turn(state = INITIAL_STATE, action) {
         return draft;
       case '@turn/GET_CURRENT_PLAYER_FAILURE':
         draft.loading = false;
+        return draft;
+      case '@turn/PLAY_CARD_REQUEST':
+        draft.loading = true;
         return draft;
       default:
         return state;

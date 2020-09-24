@@ -1,5 +1,4 @@
 import produce from 'immer';
-// import { AsyncStorage } from 'react-native';
 
 const INITIAL_STATE = {
   players: [],

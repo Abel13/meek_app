@@ -48,9 +48,9 @@ const styles = StyleSheet.create({
   },
   profileImage: {
     width: '40%',
-    height: '80%',
+    height: '40%',
     resizeMode: 'contain',
-    borderRadius: 150,
+    borderRadius: 200,
   },
   profileButtons: { width: 50, height: 50, resizeMode: 'contain' },
   logo: {

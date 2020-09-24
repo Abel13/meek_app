@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function App({ data, direction, ...rest }) {
+export default function App({ onPress, data, direction, ...rest }) {
   const [symbol, setSymbol] = useState('');
   const [suitPath, setSuitPath] = useState('');
   const [transform, setTransform] = useState('');
@@ -154,7 +154,11 @@ export default function App({ data, direction, ...rest }) {
   }, [direction]);
 
   return (
-    <TouchableOpacity {...rest} style={[transform, styles.container]}>
+    <TouchableOpacity
+      onPress={() => onPress(data)}
+      {...rest}
+      style={[transform, styles.container]}
+    >
       <>
         {faceDown ? (
           <View style={[transform, styles.faceDown, styles.container]}>
@@ -163,20 +167,20 @@ export default function App({ data, direction, ...rest }) {
             </View>
           </View>
         ) : (
-          <View style={styles.faceUp}>
-            <View style={styles.topSymbol}>
-              <Text style={[color, styles.symbol]}>{symbol}</Text>
-              <Image style={styles.smallImage} source={suitPath} />
+            <View style={styles.faceUp}>
+              <View style={styles.topSymbol}>
+                <Text style={[color, styles.symbol]}>{symbol}</Text>
+                <Image style={styles.smallImage} source={suitPath} />
+              </View>
+              <View style={styles.suit}>
+                <Image style={styles.centerImage} source={suitPath} />
+              </View>
+              <View style={styles.bottomSymbol}>
+                <Text style={[color, styles.symbol]}>{symbol}</Text>
+                <Image style={styles.smallImage} source={suitPath} />
+              </View>
             </View>
-            <View style={styles.suit}>
-              <Image style={styles.centerImage} source={suitPath} />
-            </View>
-            <View style={styles.bottomSymbol}>
-              <Text style={[color, styles.symbol]}>{symbol}</Text>
-              <Image style={styles.smallImage} source={suitPath} />
-            </View>
-          </View>
-        )}
+          )}
       </>
     </TouchableOpacity>
   );

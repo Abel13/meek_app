@@ -24,7 +24,7 @@ export function* createMatch({ payload }) {
     yield NavigationService.navigate('Room');
   } catch (error) {
     const { data } = error.response;
-    console.log(data);
+    console.log('MATCH', data);
     const message = 'Dados inválidos, tente novamente!';
     Alert.alert('Erro ao criar a partida', message);
     yield put(createMatchFailure());
@@ -55,6 +55,9 @@ export function* startMatch({ payload }) {
     const { matchId } = payload;
 
     yield call(api.put, `matches/${matchId}`);
+    // yield call(api.put, `matches`, {
+    //   params: { id: matchId },
+    // });
 
     yield put(startMatchSuccess());
 
