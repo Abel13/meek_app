@@ -69,7 +69,7 @@ export default function Menu({ navigation }) {
     <>
       <ImageBackground
         style={{ flex: 1 }}
-        source={require('../../../assets/background.jpg')}
+        source={require('../../../assets/background.png')}
       >
         <View style={styles.profileContainer}>
           <View style={styles.profileImageContainer}>
