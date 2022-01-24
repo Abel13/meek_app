@@ -4,7 +4,9 @@ import auth from './auth/sagas';
 import user from './user/sagas';
 import match from './match/sagas';
 import matchPlayers from './matchPlayers/sagas';
+import round from './round/sagas';
+import turn from './turn/sagas';
 
 export default function* rootSaga() {
-  return yield all([auth, user, match, matchPlayers]);
+  return yield all([auth, user, match, matchPlayers, round, turn]);
 }

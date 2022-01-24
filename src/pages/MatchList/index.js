@@ -58,8 +58,10 @@ const styles = StyleSheet.create({
 export default function MatchList({ navigation }) {
   const { profile } = useSelector(state => state.user);
   const [matchName, setMatchName] = useState(
-    `Partida de ${profile.username} ${moment().format('YYMDhmmss')}`
+    `Partida de ${profile.username} ${moment().format('YYMDhms')}`
   );
+  const [refresh, setRefresh] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -69,16 +71,22 @@ export default function MatchList({ navigation }) {
 
   useEffect(() => {
     async function loadMatches() {
+      setRefreshing(true);
+      setRefresh(false);
       try {
         const response = await api.get('matches');
         setMatches(response.data);
       } catch (error) {
         console.log(error.response);
+      } finally {
+        setRefreshing(false);
       }
     }
 
-    loadMatches();
-  }, []);
+    if (refresh) {
+      loadMatches();
+    }
+  }, [refresh]);
 
   function handleCreateMatch() {
     dispatch(MatchActions.createMatchRequest(matchName));
@@ -116,7 +124,7 @@ export default function MatchList({ navigation }) {
             value={matchName.toUpperCase()}
             onChangeText={value => setMatchName(value)}
             placeholder="Nome da partida"
-            icon="play-arrow"
+            icon="videogame-asset"
           />
           <View style={{ alignItems: 'flex-end', marginRight: 10 }}>
             <Button
@@ -130,6 +138,10 @@ export default function MatchList({ navigation }) {
           <Text style={styles.title}>PARTIDAS ABERTAS</Text>
           <FlatList
             data={matches}
+            onRefresh={() => {
+              setRefresh(true);
+            }}
+            refreshing={refreshing}
             renderItem={({ item }) => (
               <Item
                 title={item.name}

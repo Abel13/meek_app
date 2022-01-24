@@ -4,9 +4,12 @@ import { useSelector } from 'react-redux';
 import { setNavigator } from './services/NavigationService';
 
 import createRouter from './routes';
+import api from './services/api';
 
 export default function AppRoutes() {
-  const signed = useSelector(state => state.auth.signed);
+  const { signed, token } = useSelector(state => state.auth);
+
+  api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
   const Routes = createRouter(signed);
 

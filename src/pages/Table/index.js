@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, Text, Button, StatusBar } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Text,
+  Button,
+  StatusBar,
+  Alert,
+} from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import Card from '../../components/Card';
 
 import { cards } from '../../components/Card/cards';
@@ -8,8 +17,8 @@ import Player from '../../components/Player';
 import Bet from '../../components/Bet';
 import Modal from '../../components/Modal';
 
-import * as MatchPlayersActions from '../../store/modules/matchPlayers/actions';
-// import { Container } from './styles';
+import * as RoundActions from '../../store/modules/round/actions';
+import * as TurnActions from '../../store/modules/turn/actions';
 
 const styles = StyleSheet.create({
   container: {
@@ -52,7 +61,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
-  shackle: {
+  myArea: {
     flex: 0.7,
     justifyContent: 'center',
     alignItems: 'center',
@@ -62,41 +71,84 @@ const styles = StyleSheet.create({
 export default function Table() {
   const dispatch = useDispatch();
 
-  const { match } = useSelector(state => state.match);
-  const { profile } = useSelector(state => state.user);
-  const { players } = useSelector(state => state.matchPlayers);
+  const { match } = useSelector(state => state.match); // PARTIDA ATUAL
+  const { profile } = useSelector(state => state.user); // PERFIL USUARIO
+  const { players } = useSelector(state => state.matchPlayers); // TODOS OS JOGADORES DA PARTIDA
+  const { roundCards } = useSelector(state => state.round); //
+  const {
+    turnCardsPlayed,
+    playedCards,
+    turn,
+    round,
+    currentPlayer,
+    stepBet,
+    stepPlay,
+    blockedBet,
+    endOfBet,
+    betsPlaced,
+  } = useSelector(state => state.turn);
 
-  const [heart] = useState('♥');
-  const [user, setUser] = useState({});
-  const [modalBetVisible, setModalBetVisible] = useState(false);
-  const [myCards, setMyCards] = useState([]);
-  const [opponents, setOpponents] = useState([]);
-  const [shackle, setShackle] = useState(null);
   const [myPlayedCard, setMyPlayedCard] = useState(null);
-  const [opponent01Card, setOpponent01Card] = useState(null);
-  const [opponent02Card, setOpponent02Card] = useState(null);
-  const [opponent03Card, setOpponent03Card] = useState(null);
-  const [opponent04Card, setOpponent04Card] = useState(null);
-  const [opponent05Card, setOpponent05Card] = useState(null);
-  const [opponent06Card, setOpponent06Card] = useState(null);
-  const [opponent07Card, setOpponent07Card] = useState(null);
+  const [myCards, setMyCards] = useState([]);
+  const [myBet, setMyBet] = useState('-');
+
+  const [user, setUser] = useState(null); // INSERIDO APOS CARREGAR OS JOGADORES
+  const [modalBetVisible, setModalBetVisible] = useState(false);
+  const [opponents, setOpponents] = useState([]);
+  const [opponentsCard, setOpponentsCard] = useState([]);
+  const [shackle, setShackle] = useState(null);
+
+  const [readyToBet, setReadyToBet] = useState(false);
+  const [readyToPlay, setReadyToPlay] = useState(false);
+  const [betMax, setBetMax] = useState(0);
+  const [myTurn, setMyTurn] = useState(false);
+
+  const heart = '♥';
 
   useEffect(() => {
-    async function loadPlayers() {
-      try {
-        dispatch(MatchPlayersActions.loadPlayersRequest(match.secure_id));
-      } catch (error) {
-        console.log(error);
-      }
+    if (betsPlaced && betsPlaced.length > 0 && user) {
+      const bets = opponents.map(element => {
+        const player = betsPlaced.find(el => el.user_id === element.secure_id);
+
+        if (player) {
+          return { ...element, bet: player.bet };
+        }
+      });
+
+      const me = betsPlaced.find(el => el.user_id === user.secure_id);
+      setMyBet(me.bet);
+      setOpponents(bets);
     }
-    loadPlayers();
-  }, []);
+  }, [betsPlaced, user]);
+
+  useEffect(() => {
+    if (myTurn) {
+      console.log('EU', stepBet, stepPlay);
+      setReadyToBet(stepBet);
+      setReadyToPlay(stepPlay);
+    } else {
+      setReadyToBet(false);
+      setReadyToPlay(false);
+    }
+  }, [myTurn]);
+
+  useEffect(() => {
+    if (currentPlayer && user) {
+      setMyTurn(currentPlayer.secure_id === user.secure_id);
+    }
+  }, [currentPlayer, stepBet, stepPlay]);
 
   useEffect(() => {
     async function loadOpponents() {
       try {
-        const list = players.filter(el => el.secure_id !== profile.secure_id);
-        setOpponents(list);
+        if (players) {
+          const list = players.filter(el => el.secure_id !== profile.secure_id);
+          const me = players.filter(
+            el => el.secure_id === profile.secure_id
+          )[0];
+          setOpponents(list);
+          setUser(me);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -104,8 +156,115 @@ export default function Table() {
     loadOpponents();
   }, [players]);
 
-  function closeModal() {
-    setModalBetVisible(false);
+  useEffect(() => {
+    async function loadCards() {
+      if (round.secure_id) {
+        try {
+          dispatch(RoundActions.getRoundCardsRequest(round.secure_id));
+          setShackle(cards.find(c => c.id === round.shackle));
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+
+    if (round) {
+      loadCards();
+    }
+  }, [round]);
+
+  useEffect(() => {
+    function setPlayedCards() {
+      if (turnCardsPlayed && !turnCardsPlayed.card) {
+        setMyPlayedCard(null);
+      }
+
+      const oCards = [];
+      playedCards.forEach(element => {
+        oCards.push(cards.filter(e => e.id === element.card)[0]);
+      });
+      setOpponentsCard(oCards);
+    }
+    setPlayedCards();
+  }, [playedCards]);
+
+  useEffect(() => {
+    function playMyCard() {
+      if (turnCardsPlayed && turnCardsPlayed.card) {
+        const faceDown = !endOfBet;
+        setMyPlayedCard({
+          ...cards.filter(e => e.id === turnCardsPlayed.card)[0],
+          faceDown,
+        });
+      }
+    }
+    playMyCard();
+  }, [turnCardsPlayed, endOfBet]);
+
+  useEffect(() => {
+    async function loadTurn() {
+      const mCards = [];
+      roundCards.forEach(element => {
+        mCards.push(cards.filter(e => e.id === element.card)[0]);
+      });
+      if (round && round.total_turns > 1) {
+        setMyCards(mCards);
+      }
+    }
+    loadTurn();
+  }, [roundCards]);
+
+  useEffect(() => {
+    async function loadPlayedCards() {
+      if (turn) {
+        setBetMax(round.total_turns);
+        try {
+          dispatch(TurnActions.getPlayedCardsRequest(turn.secure_id));
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+    loadPlayedCards();
+  }, [turn]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      try {
+        // console.log(match.secure_id);
+        dispatch(TurnActions.updateGame(match.secure_id));
+        // console.log(myPlayedCard);
+      } catch (error) {
+        console.log(error);
+        // console.log(error.response.request);
+      }
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  async function closeModal(data) {
+    try {
+      setReadyToBet(false);
+      await dispatch(RoundActions.betRequest(data, round.secure_id));
+      setModalBetVisible(false);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function play(card) {
+    if (myTurn && stepPlay) {
+      console.log('CARD: ', card);
+      try {
+        console.log('STARTING');
+        await dispatch(TurnActions.playCardRequest(card.id, turn.secure_id));
+        console.log('RETURNED');
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      Alert.alert('Ops!', 'Faça sua aposta ou aguarde sua vez!');
+    }
   }
 
   return (
@@ -129,8 +288,8 @@ export default function Table() {
                   }}
                 >
                   <View style={{ flex: 1 }}>
-                    {opponent05Card && (
-                      <Card direction="upside-down" data={opponent05Card} />
+                    {opponentsCard[4] && (
+                      <Card direction="upside-down" data={opponentsCard[4]} />
                     )}
                   </View>
                   <View
@@ -139,17 +298,17 @@ export default function Table() {
                       alignItems: 'center',
                     }}
                   >
-                    {opponent04Card && (
-                      <Card direction="upside-down" data={opponent04Card} />
+                    {opponentsCard[3] && (
+                      <Card direction="upside-down" data={opponentsCard[3]} />
                     )}
                   </View>
                   <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                    {opponent03Card && (
+                    {opponentsCard[2] && (
                       <Card
                         onPress={() => {
                           setModalBetVisible(true);
                         }}
-                        data={opponent03Card}
+                        data={opponentsCard[2]}
                         direction="upside-down"
                       />
                     )}
@@ -169,8 +328,8 @@ export default function Table() {
                     justifyContent: 'center',
                   }}
                 >
-                  {opponent06Card && (
-                    <Card direction="left" data={opponent06Card} />
+                  {opponentsCard[5] && (
+                    <Card direction="left" data={opponentsCard[5]} />
                   )}
                 </View>
                 <View
@@ -180,8 +339,8 @@ export default function Table() {
                     alignItems: 'flex-end',
                   }}
                 >
-                  {opponent02Card && (
-                    <Card direction="right" data={opponent02Card} />
+                  {opponentsCard[1] && (
+                    <Card direction="right" data={opponentsCard[1]} />
                   )}
                 </View>
               </View>
@@ -208,8 +367,8 @@ export default function Table() {
                     justifyContent: 'center',
                   }}
                 >
-                  {opponent07Card && (
-                    <Card direction="left" data={opponent07Card} />
+                  {opponentsCard[6] && (
+                    <Card direction="left" data={opponentsCard[6]} />
                   )}
                 </View>
                 <View
@@ -219,12 +378,12 @@ export default function Table() {
                     alignItems: 'flex-end',
                   }}
                 >
-                  {opponent01Card && (
-                    <Card direction="right" data={opponent01Card} />
+                  {opponentsCard[0] && (
+                    <Card direction="right" data={opponentsCard[0]} />
                   )}
                 </View>
               </View>
-              <View style={styles.shackle}>
+              <View style={styles.myArea}>
                 {myPlayedCard && <Card data={myPlayedCard} />}
               </View>
             </View>
@@ -265,7 +424,10 @@ export default function Table() {
         <View
           style={[
             styles.areaDivision,
-            { flex: 1, justifyContent: 'space-between' },
+            {
+              flex: 1,
+              justifyContent: 'space-between',
+            },
           ]}
         >
           <View
@@ -299,7 +461,10 @@ export default function Table() {
         <View
           style={[
             styles.areaDivision,
-            { flex: 1, justifyContent: 'space-between' },
+            {
+              flex: 0.8,
+              justifyContent: 'space-between',
+            },
           ]}
         >
           <View
@@ -334,31 +499,43 @@ export default function Table() {
           style={[
             {
               marginHorizontal: '10%',
-              flex: 0.8,
+              flex: 0.7,
               zIndex: 2,
             },
           ]}
         >
-          <View style={[styles.areaDivision, { marginTop: 20 }]}>
-            <View style={styles.myCardsArea}>
-              {myCards[0] && <Card data={myCards[0]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[1] && <Card data={myCards[1]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[2] && <Card data={myCards[2]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[3] && <Card data={myCards[3]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[4] && <Card data={myCards[4]} />}
-            </View>
-            <View style={styles.myCardsArea}>
-              {myCards[5] && <Card data={myCards[5]} />}
-            </View>
-          </View>
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 10,
+              backgroundColor: myTurn ? '#4A4' : '#944',
+              alignSelf: 'flex-end',
+            }}
+          />
+
+          {readyToBet ? (
+            <TouchableOpacity
+              style={{
+                width: '50%',
+                backgroundColor: '#4A4',
+                padding: 5,
+                borderColor: '#393',
+                borderWidth: 1,
+                borderRadius: 5,
+                alignSelf: 'center',
+              }}
+              onPress={() => setModalBetVisible(!modalBetVisible)}
+            >
+              <Text style={{ color: '#FFF', textAlign: 'center' }}>
+                APOSTAR
+              </Text>
+            </TouchableOpacity>
+          ) : (
+              <Text style={{ color: '#fff', fontSize: 14, textAlign: 'center' }}>
+                {`${0} / ${myBet ?? '-'}`}
+              </Text>
+            )}
           <View
             style={{
               alignItems: 'center',
@@ -367,19 +544,39 @@ export default function Table() {
             }}
           >
             <Text style={{ color: '#FFF', fontSize: 20 }}>
-              {heart.repeat(user.life)}
+              {heart.repeat(user ? user.life_bar : 0)}
             </Text>
+          </View>
+          <View style={[styles.areaDivision, { marginBottom: 25 }]}>
+            <View style={styles.myCardsArea}>
+              {myCards[0] && <Card onPress={play} data={myCards[0]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[1] && <Card onPress={play} data={myCards[1]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[2] && <Card onPress={play} data={myCards[2]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[3] && <Card onPress={play} data={myCards[3]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[4] && <Card onPress={play} data={myCards[4]} />}
+            </View>
+            <View style={styles.myCardsArea}>
+              {myCards[5] && <Card onPress={play} data={myCards[5]} />}
+            </View>
           </View>
         </View>
       </View>
       <View>
-        <Modal
-          title="QUAL SUA APOSTA?"
-          closeModal={() => closeModal()}
-          visible={modalBetVisible}
-          confirmText="APOSTAR"
-        >
-          <Bet max={5} blocked={1} />
+        <Modal title="QUAL SUA APOSTA?" visible={modalBetVisible}>
+          <Bet
+            confirmText="APOSTAR"
+            max={betMax}
+            blocked={blockedBet}
+            closeModal={closeModal}
+          />
         </Modal>
       </View>
     </>

@@ -1,26 +1,32 @@
 import produce from 'immer';
-// import { AsyncStorage } from 'react-native';
 
 const INITIAL_STATE = {
   players: [],
+  matchStarted: false,
   loading: false,
 };
 
 export default function matchPlayers(state = INITIAL_STATE, action) {
-  switch (action.type) {
-    case '@match/LOAD_PLAYERS_REQUEST':
-      return produce(state, draft => {
+  return produce(state, draft => {
+    switch (action.type) {
+      case '@match/LOAD_PLAYERS_REQUEST':
         draft.loading = true;
-      });
-    case '@match/LOAD_PLAYERS_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@turn/GET_CURRENT_PLAYER_SUCCESS':
+        draft.players = action.payload.data.usersMatch;
+        return draft;
+      case '@match/LOAD_PLAYERS_SUCCESS':
         draft.players = action.payload.players;
-      });
-    case '@match/LOAD_PLAYERS_FAILURE':
-      return produce(state, draft => {
+        draft.matchStarted = action.payload.started;
+        return draft;
+      case '@match/LOAD_PLAYERS_FAILURE':
         draft.loading = false;
-      });
-    default:
-      return state;
-  }
+        return draft;
+      case '@match/ENTER_MATCH_REQUEST':
+        draft.players = [];
+        return draft;
+      default:
+        return draft;
+    }
+  });
 }

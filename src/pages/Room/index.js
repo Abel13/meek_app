@@ -1,21 +1,13 @@
 import React, { useState, useEffect, Profiler } from 'react';
-import {
-  View,
-  StatusBar,
-  StyleSheet,
-  Text,
-  FlatList,
-  Image,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, Text, FlatList, Image, Alert } from 'react-native';
 
 import { useSelector, useDispatch } from 'react-redux';
 import Button from '../../components/Button';
 import BackButton from '../../components/BackButton';
-import api from '../../services/api';
 
 import * as MatchActions from '../../store/modules/match/actions';
 import * as MatchPlayersActions from '../../store/modules/matchPlayers/actions';
+import * as NavigationService from '../../services/NavigationService';
 
 const styles = StyleSheet.create({
   container: {
@@ -55,28 +47,34 @@ const styles = StyleSheet.create({
 export default function Room({ navigation }) {
   const { match } = useSelector(state => state.match);
   const { profile } = useSelector(state => state.user);
-  const { players } = useSelector(state => state.matchPlayers);
+  const { players, matchStarted } = useSelector(state => state.matchPlayers);
+
+  const [timer, setTimer] = useState(null);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    async function loadPlayers() {
+    const id = setInterval(() => {
       try {
         dispatch(MatchPlayersActions.loadPlayersRequest(match.secure_id));
       } catch (error) {
         console.log(error.response.request);
       }
-    }
-    loadPlayers();
+    }, 3000);
+    return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (matchStarted) NavigationService.navigate('Table');
+  }, [matchStarted]);
+
   function handleStart() {
-    if (players.length >= 2) {
+    if (players.length > 2) {
       dispatch(MatchActions.startMatchRequest(match.secure_id));
     } else {
       Alert.alert(
-        'Erro ao entrar na partida',
-        'São necessários pelo menos 2 jogadores para iniciar a partida'
+        'Oops',
+        'São necessários pelo menos 3 jogadores para iniciar a partida'
       );
     }
   }
@@ -99,25 +97,40 @@ export default function Room({ navigation }) {
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={{ marginTop: 30, flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <BackButton navigation={navigation} page="MatchList" />
-            <Text style={styles.title}>PARTICIPANTES</Text>
-          </View>
-          <Text style={styles.title}>{match.name}</Text>
-          <FlatList
-            data={players}
-            renderItem={({ item }) => <Item player={item} />}
-            keyExtractor={item => item.secureId}
-          />
+      {players.length === 0 ? (
+        <View
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#000',
+            flex: 1,
+          }}
+        >
+          <Text style={{ color: '#FFF', fontSize: 16 }}>
+            Buscando jogadores...
+          </Text>
         </View>
-        {profile.secure_id === match.user_id && (
-          <View style={{ margin: 10, alignItems: 'flex-end' }}>
-            <Button onPress={() => handleStart()} text="INICIAR" />
+      ) : (
+          <View style={styles.container}>
+            <View style={{ marginTop: 30, flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <BackButton navigation={navigation} page="MatchList" />
+                <Text style={styles.title}>PARTICIPANTES</Text>
+              </View>
+              <Text style={styles.title}>{match.name}</Text>
+              <FlatList
+                data={players}
+                renderItem={({ item }) => <Item player={item} />}
+                keyExtractor={item => item.secureId}
+              />
+            </View>
+            {profile.secure_id === match.user_id && (
+              <View style={{ margin: 10, alignItems: 'flex-end' }}>
+                <Button onPress={() => handleStart()} text="INICIAR" />
+              </View>
+            )}
           </View>
         )}
-      </View>
     </>
   );
 }

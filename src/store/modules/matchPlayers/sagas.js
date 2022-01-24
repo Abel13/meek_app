@@ -9,14 +9,13 @@ export function* loadPlayers({ payload }) {
   try {
     const { matchId } = payload;
 
-    // const response = await api.get(`usersmatch/${match.secure_id}`);
     const response = yield call(api.get, `usersmatch/${matchId}`);
 
-    const players = response.data;
+    const { players, started } = response.data;
 
-    yield put(loadPlayersSuccess(players));
+    yield put(loadPlayersSuccess({ players, started }));
   } catch (error) {
-    Alert.alert('Erro ao entrar na sala', `Falha ao entrar na sala!`);
+    Alert.alert('Erro ao sincronizar dados', `Falha ao buscar informações!`);
     yield put(loadPlayersFailure());
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Image, StyleSheet, Text } from 'react-native';
-import PropTypes from 'prop-types';
+import PropTypes, { any } from 'prop-types';
 
 // import { Container } from './styles';
 
@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function Player({ user }) {
+export default function Player({ user, points }) {
   const [heart] = useState('♥');
 
   return (
@@ -41,15 +41,17 @@ export default function Player({ user }) {
               paddingVertical: 2,
               borderColor: '#FFF',
               borderWidth: 1,
-              borderTopEndRadius: 5,
-              borderTopStartRadius: 5,
+              borderRadius: 5,
               alignItems: 'center',
             }}
           >
-            <Text style={{ color: '#fff' }}>{user.username}</Text>
+            <Text style={{ color: '#fff', fontSize: 12 }}>{user.username}</Text>
 
-            <Text style={{ color: '#fff', fontSize: 7 }}>
-              {heart.repeat(user.life)}
+            <Text style={{ color: '#fff', fontSize: 10 }}>
+              {heart.repeat(user.life_bar)}
+            </Text>
+            <Text style={{ color: '#fff', fontSize: 14 }}>
+              {`${points} / ${user.bet ?? '-'}`}
             </Text>
           </View>
         </View>
@@ -59,7 +61,8 @@ export default function Player({ user }) {
 }
 
 Player.propTypes = {
-  user: PropTypes.object,
+  user: PropTypes.objectOf(any),
+  points: PropTypes.number,
 };
 
 Player.defaultProps = {
@@ -68,4 +71,5 @@ Player.defaultProps = {
     username: '',
     life: 0,
   },
+  points: 0,
 };
