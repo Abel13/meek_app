@@ -8,42 +8,37 @@ const INITIAL_STATE = {
 };
 
 export default function match(state = INITIAL_STATE, action) {
-  switch (action.type) {
-    case '@match/CREATE_MATCH_REQUEST':
-      return produce(state, draft => {
+  return produce(state, draft => {
+    switch (action.type) {
+      case '@match/CREATE_MATCH_REQUEST':
+        draft.match = null;
         draft.loading = true;
-      });
-    case '@match/ENTER_MATCH_REQUEST':
-      return produce(state, draft => {
+        return draft;
+      case '@match/ENTER_MATCH_REQUEST':
         draft.loading = true;
-      });
-    case '@match/START_MATCH_REQUEST':
-      return produce(state, draft => {
+        return draft;
+      case '@match/START_MATCH_REQUEST':
         draft.loading = true;
-      });
-    case '@match/CREATE_MATCH_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@match/CREATE_MATCH_SUCCESS':
         draft.match = action.payload.match;
         draft.loading = false;
-      });
-    case '@match/ENTER_MATCH_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@match/ENTER_MATCH_SUCCESS':
         draft.match = action.payload.match;
         draft.loading = false;
-      });
-    case '@match/START_MATCH_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@match/START_MATCH_SUCCESS':
         draft.loading = false;
-      });
-    case '@match/CREATE_MATCH_FAILURE':
-      return produce(state, draft => {
+        return draft;
+      case '@match/CREATE_MATCH_FAILURE':
         draft.loading = false;
-      });
-    case '@match/START_MATCH_FAILURE':
-      return produce(state, draft => {
+        return draft;
+      case '@match/START_MATCH_FAILURE':
         draft.loading = false;
-      });
-    default:
-      return state;
-  }
+        return draft;
+      default:
+        return draft;
+    }
+  });
 }

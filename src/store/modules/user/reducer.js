@@ -6,29 +6,27 @@ const INITIAL_STATE = {
 };
 
 export default function user(state = INITIAL_STATE, action) {
-  switch (action.type) {
-    case '@user/SIGN_UP_REQUEST':
-      return produce(state, draft => {
+  return produce(state, draft => {
+    switch (action.type) {
+      case '@user/SIGN_UP_REQUEST':
         draft.loading = true;
-      });
-    case '@auth/SIGN_IN_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@auth/SIGN_IN_SUCCESS':
         draft.profile = {
           ...action.payload.user,
         };
-      });
-    case '@user/SIGN_UP_SUCCESS':
-      return produce(state, draft => {
+        return draft;
+      case '@user/SIGN_UP_SUCCESS':
         draft.profile = {
           ...action.payload.user,
         };
         draft.loading = false;
-      });
-    case '@user/SIGN_UP_FAILURE':
-      return produce(state, draft => {
+        return draft;
+      case '@user/SIGN_UP_FAILURE':
         draft.loading = false;
-      });
-    default:
-      return state;
-  }
+        return draft;
+      default:
+        return state;
+    }
+  });
 }

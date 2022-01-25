@@ -1,13 +1,12 @@
-export function signUpRequest(
-  username,
-  email,
-  password,
-  // eslint-disable-next-line camelcase
-  password_confirmation
-) {
+export function signUpRequest(username, email, password, passwordConfirmation) {
   return {
     type: '@user/SIGN_UP_REQUEST',
-    payload: { username, email, password, password_confirmation },
+    payload: {
+      username,
+      email,
+      password,
+      password_confirmation: passwordConfirmation,
+    },
   };
 }
 

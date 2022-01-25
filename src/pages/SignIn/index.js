@@ -35,7 +35,7 @@ export default function SignIn({ navigation }) {
 
   const dispatch = useDispatch();
 
-  const loading = useSelector(state => state.auth.loading);
+  const { loading } = useSelector(state => state.auth);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
